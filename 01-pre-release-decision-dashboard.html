@@ -69,9 +69,6 @@
   .verdict p{font-size:15px;max-width:820px;opacity:.92}
   .verdict.conditional .accentbar,.verdict.nogo .accentbar{display:none}
   .verdict.go::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--pink)}
-  .verdict-score{position:absolute;right:30px;top:50%;transform:translateY(-50%);text-align:center}
-  .verdict-score .num{font-family:'Merriweather',serif;font-weight:900;font-size:46px;line-height:1}
-  .verdict-score .cap{font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-top:2px}
 
   /* ---------- layout grid ---------- */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
@@ -152,8 +149,6 @@
     .grid{grid-template-columns:1fr}
     .stk-grid{grid-template-columns:1fr 1fr}
     .legend{grid-template-columns:1fr}
-    .verdict-score{position:static;transform:none;text-align:left;margin-top:14px;display:flex;align-items:baseline;gap:10px}
-    .verdict-score .cap{margin-top:0}
     .scenario-desc{text-align:left}
     .topbar h1{font-size:26px}
   }
@@ -198,10 +193,6 @@
     <div class="vk">Launch Recommendation · <span id="vScn"></span></div>
     <h2 id="vTitle"></h2>
     <p id="vBody"></p>
-    <div class="verdict-score">
-      <div class="num" id="vNum"></div>
-      <div class="cap">Portfolio<br>risk index</div>
-    </div>
   </div>
 
   <div class="grid">
@@ -279,34 +270,35 @@
         <div class="lg safe">
           <h4>Safe to launch</h4>
           <ul>
-            <li>Workaround covers 100% of cases</li>
-            <li>No compliance / regulatory exposure</li>
+            <li>Documented workaround covers 100% of cases</li>
+            <li>No compliance or regulatory exposure</li>
             <li>No customer-facing impact</li>
-            <li>Ops absorbs overhead at production scale</li>
+            <li>Ops absorbs the overhead at production scale</li>
           </ul>
         </div>
         <div class="lg mit">
           <h4>Requires mitigation</h4>
           <ul>
-            <li>Workaround exists but adds manual load</li>
-            <li>Customer impact quantified &amp; contained</li>
-            <li>Fix committed within 2–4 weeks</li>
+            <li>Workaround possible but adds manual load</li>
             <li>Monitoring / escalation path confirmed</li>
+            <li>Customer impact quantified and contained</li>
+            <li>Eng commits to fix sprints</li>
           </ul>
         </div>
         <div class="lg block">
-          <h4>Block feature</h4>
+          <h4>Blocks launch</h4>
           <ul>
-            <li>No workaround — customer-harm pathway open</li>
-            <li>Regulatory / compliance breach possible</li>
-            <li>Cannot scale under real production volume</li>
-            <li>SLA failure risk unacceptable at peak</li>
+            <li>No workaround possible — customer-harm pathway open</li>
+            <li>Regulatory or compliance breach possible</li>
+            <li>Customer impact not quantified / contained</li>
+            <li>SLA failure risk is unacceptable at production scale</li>
           </ul>
         </div>
       </div>
       <div class="formula">
         <b>Composite risk</b> = (Customer&nbsp;Harm × <code>0.35</code>) + (Regulatory&nbsp;Exposure × <code>0.40</code>) + (Scale-at-Peak × <code>0.25</code>), each dimension scored 1–5.
-        Regulatory exposure carries the heaviest weight because protecting the UK licence is non-negotiable. &nbsp;Band: <code>&lt;2.0</code> Safe · <code>2.0–4</code> Mitigate · <code>≥4</code> Block).
+        Regulatory exposure carries the heaviest weight because protecting the UK licence is non-negotiable. &nbsp;Band: <code>&lt;2.0</code> Safe · <code>2.0–4</code> Mitigate · <code>≥4</code> Block.
+        <br><b>Decision rule:</b> two or more issues in the Block band → No-Go; a single Block or any Mitigate → Conditional Go (contained with guardrails); all Safe → Full Go.
       </div>
     </section>
 
@@ -352,24 +344,33 @@ function scoreB(s){
   return {CH,RE,SP, wk};
 }
 function scoreC(s){
-  const CH = s.cAcc>=99?1 : s.cAcc>=95?2 : s.cAcc>=85?4 : 5;
-  const RE = s.cAcc>=99?2 : s.cAcc>=85?3 : 4;
-  const SP = s.cAcc>=99?1 : s.cAcc>=90?4 : 5;
+  // Customer harm — misrouted tickets, driven by routing accuracy at peak
+  const CH = s.cAcc>=99?1 : s.cAcc>=95?2 : s.cAcc>=88?3 : s.cAcc>=80?4 : 5;
+  // Scale-at-peak — peak inbound vs cap AND CS capacity utilisation; governed by the worse of the two
+  const peakS = s.cPeak<=90?1 : s.cPeak<=110?2 : s.cPeak<=130?3 : s.cPeak<=150?4 : 5;
+  const csS   = s.cCs<=70?1   : s.cCs<=90?2    : s.cCs<=100?3   : s.cCs<=115?4   : 5;
+  const SP = Math.max(peakS, csS);
+  // Regulatory / SLA (DISP) exposure — rises with misrouting AND with queue / peak overrun
+  const accRE  = s.cAcc>=99?1 : s.cAcc>=95?2 : s.cAcc>=88?3 : 4;
+  const loadRE = (s.cCs>115||s.cPeak>150)?5 : (s.cCs>100||s.cPeak>130)?4 : (s.cCs>90||s.cPeak>110)?3 : 2;
+  const RE = Math.max(accRE, loadRE);
+  // workaround state — drives action text + the "held cap" annotation (not the band threshold)
   let wk;
   if(s.cAcc>=99 && s.cPeak<=110 && s.cCs<=100) wk='lifted';
   else if(s.cAcc<80 || s.cCs>115 || s.cPeak>150) wk='overrun';
   else wk='partial';
-  return {CH,RE,SP, wk};
+  const cap = (wk!=='lifted');   // volume cap still held
+  return {CH,RE,SP, wk, cap};
 }
 function composite(d){ return d.CH*0.35 + d.RE*0.40 + d.SP*0.25; }
 
 function band(d){
+  // Band follows the composite directly: <2.0 Safe · 2.0–<4.0 Mitigate · >=4.0 Block
   const sc = composite(d);
-  if(d.wk==='none'){ return (sc>=3.5 && (d.RE>=4||d.CH>=4)) ? 'block' : 'safe'; }
-  if(d.wk==='overrun') return 'block';
-  if(sc<2.0 && (d.wk==='full'||d.wk==='lifted'||d.wk==='resolved')) return 'safe';
-  if(d.SP>=5 && d.wk==='partial') return 'mitcap';
-  return 'mit';
+  let b = sc < 2.0 ? 'safe' : (sc < 4.0 ? 'mit' : 'block');
+  // display-only nuance: a Mitigate issue whose volume cap is still held shows "Mitigate + Cap"
+  if(b==='mit' && d.cap) b='mitcap';
+  return b;
 }
 
 const ISSUE_META = {
@@ -389,7 +390,7 @@ function actionText(key, b, d, s){
     return 'No workaround for incorrect exclusion comms. <b>Ship AI summaries disabled</b>; re-enable only after a full QA cycle with zero failures.';
   }
   if(key==='C'){
-    if(b==='safe') return 'Routing sustained ≥ 99% — lift the volume cap, keep monitoring live.';
+    if(b==='safe') return 'Routing stable and within capacity at this load — keep monitoring; lift the volume cap once ≥ 99% is sustained at peak.';
     if(b==='block') return 'Routing cannot be contained at this load — <b>hold the launch</b>, hold volume at cap, invoke the rollback plan, escalate within 1 hour.';
     return 'Manual override + daily Claims Bordereaux review. <b>Hold the volume cap</b> until routing passes 99%+ at peak.';
   }
@@ -398,16 +399,17 @@ function actionText(key, b, d, s){
 /* ---------- stakeholder logic ---------- */
 function stakeholders(scn, results){
   const cBand = results.C.b, aBand = results.A.b, bBand = results.B.b;
-  const launchBlocked = (cBand==='block') || (aBand==='block');
+  const blocks = [aBand,bBand,cBand].filter(x => x==='block').length;
+  const launchBlocked = blocks >= 2;
   if(launchBlocked){
     return [
-      {d:'Product &amp; Engineering', st:'block', m:'Routing is failing containment and accuracy is below baseline. Conditions are not met — do not proceed at T-24h.'},
-      {d:'Claims &amp; CS Operations', st:'block', m:'Queue is outrunning staffed capacity with SLA breaches forming. Hold volume at cap; prepare maximum manual containment.'},
-      {d:'Compliance &amp; Legal', st:'block', m:'DISP timing and Consumer-Duty exposure are live. Recommend No-Go and document the residual-risk decision.'},
+      {d:'Product &amp; Engineering', st:'block', m:'Two or more issues are in Block at once — the failures compound. Conditions are not met; do not proceed at T-24h.'},
+      {d:'Claims &amp; CS Operations', st:'block', m:'Multiple containment paths are breached simultaneously. Hold volume at cap; prepare maximum manual containment.'},
+      {d:'Compliance &amp; Legal', st:'block', m:'Compounding DISP timing and Consumer-Duty exposure across issues. Recommend No-Go and document the residual-risk decision.'},
       {d:'Executive / Leadership', st:'block', m:'Recommendation: HOLD at T-24h. Invoke the pre-agreed rollback plan and escalate the final call within 1 hour.'}
     ];
   }
-  const conditional = (bBand==='block') || results.A.b==='mit' || results.C.b==='mitcap' || results.C.b==='mit';
+  const conditional = (blocks === 1) || aBand==='mit' || bBand==='mit' || cBand==='mitcap' || cBand==='mit';
   if(conditional){
     return [
       {d:'Product &amp; Engineering', st:'cond', m:'Conditional Go — three conditions unlock launch. AI summaries disabled, routing on live monitoring, workaround trained. Fix sprints committed post-launch.'},
@@ -426,20 +428,22 @@ function stakeholders(scn, results){
 
 /* ---------- overall verdict ---------- */
 function verdict(results){
-  const cBand=results.C.b, aBand=results.A.b, bBand=results.B.b;
-  const idx = (composite(results.A.d)*0.30 + composite(results.B.d)*0.35 + composite(results.C.d)*0.35);
-  const launchBlocked = (cBand==='block') || (aBand==='block');
-  if(launchBlocked){
+  const a=results.A.b, b=results.B.b, c=results.C.b;
+  const isMit = x => x==='mit' || x==='mitcap';
+  const blocks = [a,b,c].filter(x => x==='block').length;
+  // No-Go when 2 or more issues are in the Block band simultaneously.
+  if(blocks >= 2){
     return {cls:'nogo', k:'No-Go', title:'No-Go — Hold at the T-24h gate',
-      body:'At least one launch-critical issue cannot be contained at this load. Routing and/or claims handling fall outside the agreed workaround scope. Invoke maximum manual containment and the pre-agreed rollback plan; escalate the residual-risk decision for the final call within 1 hour.', idx};
+      body:'Two or more issues are in the Block band at once — the failures compound beyond the agreed containment scope. Invoke maximum manual containment and the pre-agreed rollback plan; escalate the residual-risk decision for the final call within 1 hour.'};
   }
-  const conditional = (bBand==='block') || aBand==='mit' || cBand==='mitcap' || cBand==='mit';
+  // A single Block is contained (feature disabled / cap held); any Mitigate also needs guardrails.
+  const conditional = (blocks === 1) || isMit(a) || isMit(b) || isMit(c);
   if(conditional){
     return {cls:'conditional', k:'Conditional Go', title:'Conditional Go — launch on schedule with guardrails',
-      body:'AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
+      body:'AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.'};
   }
   return {cls:'go', k:'Full Go', title:'Full Go — launch at full capability',
-    body:'All three issues are resolved or absorbed at production scale. AI summaries pass QA with zero exclusion omissions and can be re-enabled, routing sustains above the cap-lift threshold, and the total-loss workaround overhead is negligible. Launch on schedule with standard monitoring.', idx};
+    body:'All three issues are resolved or absorbed at production scale. AI summaries pass QA with zero exclusion omissions and can be re-enabled, routing sustains above the cap-lift threshold, and the total-loss workaround overhead is negligible. Launch on schedule with standard monitoring.'};
 }
 
 /* ============================================================
@@ -503,7 +507,6 @@ function render(){
   document.getElementById('vScn').textContent = SCN_LABEL[state.scenario];
   document.getElementById('vTitle').textContent = v.title;
   document.getElementById('vBody').innerHTML = v.body;
-  document.getElementById('vNum').textContent = v.idx.toFixed(2);
 
   // stakeholders
   const stk = stakeholders(state.scenario, r);
