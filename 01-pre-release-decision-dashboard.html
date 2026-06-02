@@ -183,7 +183,7 @@
       <span class="scenario-lab">Scenario</span>
       <div class="seg" id="seg">
         <button data-s="best">Optimistic Projection</button>
-        <button data-s="base" class="active neutral">Target Baseline</button>
+        <button data-s="base" class="active neutral">Baseline</button>
         <button data-s="worst">Risk-Adjusted Strain</button>
       </div>
     </div>
@@ -286,7 +286,6 @@
     <!-- ============ FRAMEWORK ============ -->
     <section class="panel span2">
       <h3><span class="dot"></span>Go / No-Go Decision &amp; Risk-Scoring Framework</h3>
-      <div class="ph-note">The Target Baseline mirrors the launch deck exactly. Optimistic and Risk-Adjusted states extrapolate from the same model.</div>
       <div class="legend">
         <div class="lg safe">
           <h4>Safe to launch</h4>
@@ -322,14 +321,6 @@
       </div>
     </section>
 
-  </div>
-
-  <p class="footnote">
-    Target Baseline reproduces the “UK Car Launch — Decision Framework &amp; Recommendation” deck (Conditional Go, 3 conditions).
-    Optimistic and Risk-Adjusted Strain are model extrapolations for leadership simulation only. Built as a release-planning prototype — judgement remains human-owned.
-  </p>
-</div>
-
 <script>
 /* ============================================================
    SCENARIO PRESETS  (Base = the uploaded deck's reality)
@@ -339,7 +330,7 @@ const PRESETS = {
   base:  {aVol:108, aMin:7,  bOmit:4,  bRepro:'none',   cAcc:88, cPeak:110, cCs:80,  lat:450,  up:99.9 },
   worst: {aVol:240, aMin:8,  bOmit:9,  bRepro:'none',   cAcc:76, cPeak:155, cCs:120, lat:1400, up:99.2 }
 };
-const SCN_LABEL = {best:'Optimistic Projection', base:'Target Baseline', worst:'Risk-Adjusted Strain', custom:'Custom Simulation'};
+const SCN_LABEL = {best:'Optimistic Projection', base:'Baseline', worst:'Risk-Adjusted Strain', custom:'Custom Simulation'};
 const SCN_DESC = {
   best:'Demand healthy, AI summaries pass QA with zero exclusion omissions, routing self-stabilises above the 99% cap-lift threshold. Headroom across every function.',
   base:'The reality of the launch deck: three live issues, AI summaries disabled, routing on manual override + volume cap, total-loss workaround trained. Conditional Go.',
