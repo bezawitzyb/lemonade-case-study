@@ -456,7 +456,7 @@ function verdict(results){
   const conditional = (bBand==='block') || aBand==='mit' || cBand==='mitcap' || cBand==='mit';
   if(conditional){
     return {cls:'conditional', k:'Conditional Go', title:'Conditional Go — launch on schedule with guardrails',
-      body:'No issue blocks the product launch. AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
+      body:'AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
   }
   return {cls:'go', k:'Full Go', title:'Full Go — launch at full capability',
     body:'All three issues are resolved or absorbed at production scale. AI summaries pass QA with zero exclusion omissions and can be re-enabled, routing sustains above the cap-lift threshold, and the total-loss workaround overhead is negligible. Launch on schedule with standard monitoring.', idx};
