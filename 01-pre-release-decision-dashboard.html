@@ -183,7 +183,7 @@
       <span class="scenario-lab">Scenario</span>
       <div class="seg" id="seg">
         <button data-s="best">Optimistic Projection</button>
-        <button data-s="base" class="active neutral">Target Baseline</button>
+        <button data-s="base" class="active neutral">Baseline</button>
         <button data-s="worst">Risk-Adjusted Strain</button>
       </div>
     </div>
@@ -256,19 +256,8 @@
         <input type="range" id="cCs" min="50" max="140" step="5">
       </div>
 
-      <div class="subhead">Platform — Cross-cutting</div>
-      <div class="ipt">
-        <div class="row"><label>Quote-engine API latency (p95)</label><span class="val" id="latV"></span></div>
-        <div class="hint">SLA target &lt; 800 ms</div>
-        <input type="range" id="lat" min="200" max="1800" step="50">
-      </div>
-      <div class="ipt">
-        <div class="row"><label>Platform uptime (rolling)</label><span class="val" id="upV"></span></div>
-        <div class="hint">SLA target 99.9%</div>
-        <input type="range" id="up" min="98.5" max="100" step="0.1">
-      </div>
     </section>
-
+      
     <!-- ============ RISK ENGINE ============ -->
     <section class="panel" id="risk">
       <h3><span class="dot"></span>Dynamic Risk Assessment Engine</h3>
@@ -286,7 +275,6 @@
     <!-- ============ FRAMEWORK ============ -->
     <section class="panel span2">
       <h3><span class="dot"></span>Go / No-Go Decision &amp; Risk-Scoring Framework</h3>
-      <div class="ph-note">The Target Baseline mirrors the launch deck exactly. Optimistic and Risk-Adjusted states extrapolate from the same model.</div>
       <div class="legend">
         <div class="lg safe">
           <h4>Safe to launch</h4>
@@ -318,31 +306,23 @@
       </div>
       <div class="formula">
         <b>Composite risk</b> = (Customer&nbsp;Harm × <code>0.35</code>) + (Regulatory&nbsp;Exposure × <code>0.40</code>) + (Scale-at-Peak × <code>0.25</code>), each dimension scored 1–5.
-        Regulatory exposure carries the heaviest weight because protecting the UK licence is non-negotiable. &nbsp;Band: <code>&lt;2.0</code> Safe · <code>2.0–3.5</code> Mitigate · <code>≥3.5</code> Block — modified by workaround coverage (a high score with a manual override + monitoring becomes <b>Mitigate + Volume Cap</b>, while a high score with no workaround and an open harm pathway is a hard <b>Block</b>).
+        Regulatory exposure carries the heaviest weight because protecting the UK licence is non-negotiable. &nbsp;Band: <code>&lt;2.0</code> Safe · <code>2.0–4</code> Mitigate · <code>≥4</code> Block).
       </div>
     </section>
-
-  </div>
-
-  <p class="footnote">
-    Target Baseline reproduces the “UK Car Launch — Decision Framework &amp; Recommendation” deck (Conditional Go, 3 conditions).
-    Optimistic and Risk-Adjusted Strain are model extrapolations for leadership simulation only. Built as a release-planning prototype — judgement remains human-owned.
-  </p>
-</div>
 
 <script>
 /* ============================================================
    SCENARIO PRESETS  (Base = the uploaded deck's reality)
    ============================================================ */
 const PRESETS = {
-  best:  {aVol:70,  aMin:5,  bOmit:0,  bRepro:'stable', cAcc:99, cPeak:80,  cCs:60,  lat:280,  up:99.99},
-  base:  {aVol:108, aMin:7,  bOmit:4,  bRepro:'none',   cAcc:88, cPeak:110, cCs:80,  lat:450,  up:99.9 },
-  worst: {aVol:240, aMin:8,  bOmit:9,  bRepro:'none',   cAcc:76, cPeak:155, cCs:120, lat:1400, up:99.2 }
+  best:  {aVol:70,  aMin:5,  bOmit:0,  bRepro:'stable', cAcc:99, cPeak:80,  cCs:60 },
+  base:  {aVol:108, aMin:7,  bOmit:4,  bRepro:'none',   cAcc:88, cPeak:110, cCs:80 },
+  worst: {aVol:240, aMin:8,  bOmit:9,  bRepro:'none',   cAcc:76, cPeak:155, cCs:120}
 };
-const SCN_LABEL = {best:'Optimistic Projection', base:'Target Baseline', worst:'Risk-Adjusted Strain', custom:'Custom Simulation'};
+const SCN_LABEL = {best:'Optimistic Projection', base:'Baseline', worst:'Risk-Adjusted Strain', custom:'Custom Simulation'};
 const SCN_DESC = {
   best:'Demand healthy, AI summaries pass QA with zero exclusion omissions, routing self-stabilises above the 99% cap-lift threshold. Headroom across every function.',
-  base:'The reality of the launch deck: three live issues, AI summaries disabled, routing on manual override + volume cap, total-loss workaround trained. Conditional Go.',
+  base:'Three live issues, AI summaries disabled, routing on manual override + volume cap, total-loss workaround trained. Conditional Go.',
   worst:'Marketing over-delivers, claims volume scales faster than the book, routing degrades under load and CS runs over capacity — the T-24h failure path.',
   custom:'Custom inputs — the engine is recomputing risk and the Go/No-Go call against your live assumptions.'
 };
@@ -456,7 +436,7 @@ function verdict(results){
   const conditional = (bBand==='block') || aBand==='mit' || cBand==='mitcap' || cBand==='mit';
   if(conditional){
     return {cls:'conditional', k:'Conditional Go', title:'Conditional Go — launch on schedule with guardrails',
-      body:'No issue blocks the product launch. AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
+      body:'AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
   }
   return {cls:'go', k:'Full Go', title:'Full Go — launch at full capability',
     body:'All three issues are resolved or absorbed at production scale. AI summaries pass QA with zero exclusion omissions and can be re-enabled, routing sustains above the cap-lift threshold, and the total-loss workaround overhead is negligible. Launch on schedule with standard monitoring.', idx};
@@ -487,11 +467,9 @@ function render(){
   document.getElementById('cAccV').textContent = state.cAcc + '%';
   document.getElementById('cPeakV').textContent = state.cPeak + '%';
   document.getElementById('cCsV').textContent = state.cCs + '%';
-  document.getElementById('latV').textContent = state.lat + ' ms';
-  document.getElementById('upV').textContent = state.up.toFixed(2) + '%';
 
   // sync slider positions
-  ['aVol','aMin','bOmit','cAcc','cPeak','cCs','lat','up'].forEach(id=>{ document.getElementById(id).value = state[id]; });
+  ['aVol','aMin','bOmit','cAcc','cPeak','cCs'].forEach(id=>{ document.getElementById(id).value = state[id]; });
   document.querySelectorAll('#bRepro button').forEach(b=> b.classList.toggle('on', b.dataset.v===state.bRepro));
 
   const r = compute();
@@ -549,9 +527,9 @@ function setScenario(name){
   Object.assign(state, PRESETS[name]); state.scenario=name; render();
 }
 document.querySelectorAll('#seg button').forEach(b=> b.addEventListener('click', ()=>setScenario(b.dataset.s)));
-['aVol','aMin','bOmit','cAcc','cPeak','cCs','lat','up'].forEach(id=>{
+['aVol','aMin','bOmit','cAcc','cPeak','cCs'].forEach(id=>{
   document.getElementById(id).addEventListener('input', e=>{
-    state[id] = (id==='up') ? parseFloat(e.target.value) : parseInt(e.target.value,10);
+    state[id] = parseInt(e.target.value,10);
     state.scenario='custom'; render();
   });
 });
