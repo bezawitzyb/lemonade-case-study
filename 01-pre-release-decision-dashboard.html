@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lemonade · UK Car — Pre-Release Decision Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Lato:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff0083;
+    --slate:#4a4a4a;
+    --black:#000000;
+    --white:#ffffff;
+    /* tints derived strictly from the four brand colors */
+    --slate-deep:#3a3a3a;
+    --slate-line:#5a5a5a;
+    --pink-tint:#fff0f7;
+    --grey-tint:#f4f4f4;
+    --grey-line:#e3e3e3;
+    --ink:#1a1a1a;
+    --white-70:rgba(255,255,255,.72);
+    --white-45:rgba(255,255,255,.45);
+    --black-08:rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Lato',sans-serif;
+    background:var(--slate);
+    color:var(--white);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  h1,h2,h3,h4,.serif{font-family:'Merriweather',serif}
+
+  /* ---------- shell ---------- */
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px}
+  .topbar{position:relative;background:var(--slate-deep);border-left:7px solid var(--pink);overflow:hidden}
+  .topbar .circle{position:absolute;right:-90px;top:-120px;width:340px;height:340px;border-radius:50%;background:var(--pink);opacity:.16;pointer-events:none}
+  .topbar-inner{padding:30px 28px 26px;max-width:1280px;margin:0 auto;position:relative;z-index:2}
+  .mark{font-family:'Merriweather',serif;font-weight:900;color:var(--pink);letter-spacing:.5px;font-size:18px}
+  .topbar h1{font-size:34px;font-weight:900;line-height:1.1;margin:10px 0 4px}
+  .topbar .sub{color:var(--white-70);font-size:16px;font-weight:400}
+  .meta-row{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:13px;color:var(--white-70)}
+  .meta-row b{color:var(--white);font-weight:700}
+  .pill-deadline{display:inline-flex;align-items:center;gap:7px;background:var(--pink);color:var(--white);font-weight:700;font-size:12.5px;padding:5px 12px;border-radius:40px;letter-spacing:.3px}
+
+  /* ---------- scenario toggle ---------- */
+  .scenario-bar{background:var(--slate-deep);border-top:1px solid var(--slate-line);padding:18px 0}
+  .scenario-inner{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+  .scenario-lab{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white-45);font-weight:700}
+  .seg{display:inline-flex;background:var(--slate);border:1px solid var(--slate-line);border-radius:46px;padding:5px}
+  .seg button{font-family:'Lato',sans-serif;border:none;background:transparent;color:var(--white-70);font-size:13.5px;font-weight:700;padding:10px 20px;border-radius:40px;cursor:pointer;transition:.18s;white-space:nowrap}
+  .seg button:hover{color:var(--white)}
+  .seg button.active{background:var(--pink);color:var(--white);box-shadow:0 2px 10px rgba(255,0,131,.4)}
+  .seg button.active.neutral{background:var(--white);color:var(--black)}
+  .scenario-desc{font-size:13px;color:var(--white-70);max-width:560px;text-align:right;flex:1;min-width:240px}
+
+  /* ---------- verdict banner ---------- */
+  .verdict{margin:26px 0 8px;border-radius:14px;padding:26px 30px;position:relative;overflow:hidden;border:1px solid var(--black-08)}
+  .verdict.go{background:var(--white);color:var(--black)}
+  .verdict.conditional{background:var(--pink);color:var(--white)}
+  .verdict.nogo{background:var(--black);color:var(--white)}
+  .verdict .vk{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;opacity:.7}
+  .verdict h2{font-size:30px;font-weight:900;margin:6px 0 8px}
+  .verdict p{font-size:15px;max-width:820px;opacity:.92}
+  .verdict.conditional .accentbar,.verdict.nogo .accentbar{display:none}
+  .verdict.go::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--pink)}
+  .verdict-score{position:absolute;right:30px;top:50%;transform:translateY(-50%);text-align:center}
+  .verdict-score .num{font-family:'Merriweather',serif;font-weight:900;font-size:46px;line-height:1}
+  .verdict-score .cap{font-size:11px;letter-spacing:1px;text-transform:uppercase;opacity:.7;margin-top:2px}
+
+  /* ---------- layout grid ---------- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
+  .span2{grid-column:1 / -1}
+  .panel{background:var(--white);color:var(--ink);border-radius:14px;padding:24px 24px 26px;border:1px solid var(--black-08)}
+  .panel.dark{background:var(--slate-deep);color:var(--white);border:1px solid var(--slate-line)}
+  .panel h3{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+  .panel .ph-note{font-size:12.5px;color:var(--slate);margin-top:3px}
+  .panel.dark .ph-note{color:var(--white-70)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--pink);display:inline-block;flex:none}
+
+  /* ---------- input sliders ---------- */
+  .ipt{margin-top:20px}
+  .ipt:first-of-type{margin-top:18px}
+  .ipt .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .ipt label{font-size:13.5px;font-weight:700;color:var(--ink)}
+  .ipt .val{font-family:'Merriweather',serif;font-weight:700;font-size:15px;color:var(--pink)}
+  .ipt .hint{font-size:11.5px;color:var(--slate);margin-top:1px}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:5px;background:var(--grey-line);margin-top:11px;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pink);border:3px solid var(--white);box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--pink);border:3px solid var(--white);box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer}
+  .seg-mini{display:inline-flex;background:var(--grey-tint);border-radius:8px;padding:3px;margin-top:8px}
+  .seg-mini button{border:none;background:transparent;font-family:'Lato',sans-serif;font-size:12px;font-weight:700;color:var(--slate);padding:6px 11px;border-radius:6px;cursor:pointer}
+  .seg-mini button.on{background:var(--pink);color:var(--white)}
+  .subhead{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--slate);font-weight:700;margin:22px 0 4px;border-top:1px solid var(--grey-line);padding-top:14px}
+  .subhead:first-child{border-top:none;padding-top:0;margin-top:6px}
+
+  /* ---------- issue score cards ---------- */
+  .issue{border:1px solid var(--grey-line);border-radius:12px;padding:16px 16px 18px;margin-top:14px;transition:.2s}
+  .issue:first-of-type{margin-top:16px}
+  .issue-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .issue-id{font-family:'Merriweather',serif;font-weight:900;font-size:13px;color:var(--slate);letter-spacing:.5px}
+  .issue-name{font-weight:700;font-size:15px;color:var(--ink);margin-top:1px}
+  .badge{font-size:11px;font-weight:900;letter-spacing:.6px;padding:6px 11px;border-radius:7px;white-space:nowrap;text-transform:uppercase}
+  .badge.safe{background:var(--slate);color:var(--white)}
+  .badge.mit{background:var(--white);color:var(--pink);border:2px solid var(--pink)}
+  .badge.block{background:var(--pink);color:var(--white)}
+  .dims{margin-top:14px;display:grid;gap:9px}
+  .dim{display:grid;grid-template-columns:118px 1fr 26px;align-items:center;gap:10px}
+  .dim .dl{font-size:11.5px;color:var(--slate);font-weight:700}
+  .dim .track{height:8px;background:var(--grey-tint);border-radius:6px;overflow:hidden}
+  .dim .fill{height:100%;border-radius:6px;background:var(--slate);transition:width .35s ease, background .35s ease}
+  .dim .fill.hot{background:var(--pink)}
+  .dim .dv{font-family:'Merriweather',serif;font-weight:700;font-size:13px;text-align:right;color:var(--ink)}
+  .issue-foot{margin-top:13px;font-size:12.5px;color:var(--slate);display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--grey-line);padding-top:11px}
+  .issue-foot .comp{font-family:'Merriweather',serif;font-weight:900;color:var(--ink)}
+  .issue-action{font-size:12.5px;color:var(--ink);margin-top:9px;background:var(--grey-tint);border-radius:8px;padding:10px 12px}
+  .issue-action b{color:var(--pink)}
+
+  /* ---------- stakeholder statuses ---------- */
+  .stk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+  .stk{border-radius:11px;padding:16px;border:1px solid var(--slate-line);background:var(--slate)}
+  .stk .dept{font-weight:700;font-size:13.5px;color:var(--white)}
+  .stk .st{font-size:10.5px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;padding:5px 9px;border-radius:6px;display:inline-block;margin:10px 0 9px}
+  .stk .st.ready{background:var(--white);color:var(--black)}
+  .stk .st.cond{background:transparent;color:var(--pink);border:2px solid var(--pink)}
+  .stk .st.block{background:var(--pink);color:var(--white)}
+  .stk .msg{font-size:12px;color:var(--white-70);line-height:1.45}
+
+  /* ---------- framework legend ---------- */
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  .lg{border-radius:11px;padding:16px;border:1px solid var(--grey-line)}
+  .lg.safe{background:var(--grey-tint)}
+  .lg.mit{background:var(--pink-tint);border-color:var(--pink)}
+  .lg.block{background:var(--pink);color:var(--white)}
+  .lg h4{font-size:13px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+  .lg.safe h4{color:var(--slate)}
+  .lg.mit h4{color:var(--pink)}
+  .lg ul{list-style:none;font-size:12px;line-height:1.55}
+  .lg li{padding-left:14px;position:relative;margin-bottom:3px}
+  .lg li::before{content:"";position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.6}
+  .formula{font-size:12.5px;color:var(--white-70);margin-top:16px;line-height:1.6;background:var(--slate);border:1px solid var(--slate-line);border-radius:10px;padding:14px 16px}
+  .formula code{font-family:'Merriweather',serif;color:var(--white);font-weight:700;background:rgba(255,0,131,.18);padding:1px 6px;border-radius:4px}
+
+  .footnote{font-size:11.5px;color:var(--white-45);margin-top:26px;text-align:center;line-height:1.6}
+
+  @media(max-width:880px){
+    .grid{grid-template-columns:1fr}
+    .stk-grid{grid-template-columns:1fr 1fr}
+    .legend{grid-template-columns:1fr}
+    .verdict-score{position:static;transform:none;text-align:left;margin-top:14px;display:flex;align-items:baseline;gap:10px}
+    .verdict-score .cap{margin-top:0}
+    .scenario-desc{text-align:left}
+    .topbar h1{font-size:26px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="circle"></div>
+  <div class="topbar-inner">
+    <div class="mark">Lemonade</div>
+    <h1>UK Car — Pre-Release Decision Dashboard</h1>
+    <div class="sub">Scenario simulation &amp; Go / No-Go engine · Release Planning (EU)</div>
+    <div class="meta-row">
+      <span><b>Owner:</b> Release Planner (EU)</span>
+      <span><b>Sign-off gate:</b> T-minus 24h · Product · Eng · Compliance · Claims/CS</span>
+      <span class="pill-deadline">● 72 hours to scheduled launch</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ SCENARIO TOGGLE ============ -->
+<div class="scenario-bar">
+  <div class="wrap scenario-inner">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span class="scenario-lab">Scenario</span>
+      <div class="seg" id="seg">
+        <button data-s="best">Optimistic Projection</button>
+        <button data-s="base" class="active neutral">Target Baseline</button>
+        <button data-s="worst">Risk-Adjusted Strain</button>
+      </div>
+    </div>
+    <div class="scenario-desc" id="scenarioDesc"></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ VERDICT ============ -->
+  <div class="verdict" id="verdict">
+    <div class="vk">Launch Recommendation · <span id="vScn"></span></div>
+    <h2 id="vTitle"></h2>
+    <p id="vBody"></p>
+    <div class="verdict-score">
+      <div class="num" id="vNum"></div>
+      <div class="cap">Portfolio<br>risk index</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ INPUTS ============ -->
+    <section class="panel" id="inputs">
+      <h3><span class="dot"></span>Interactive Assumptions</h3>
+      <div class="ph-note">Adjust any input to stress-test the decision. Moving a slider switches the scenario to <b>Custom</b>; the risk engine and verdict recompute live.</div>
+
+      <div class="subhead">Issue A · Total-Loss Claims Progression</div>
+      <div class="ipt">
+        <div class="row"><label>Total-loss claims / month</label><span class="val" id="aVolV"></span></div>
+        <div class="hint">Drives handler overhead and scale exposure</div>
+        <input type="range" id="aVol" min="40" max="320" step="10">
+      </div>
+      <div class="ipt">
+        <div class="row"><label>Workaround overhead / claim (min)</label><span class="val" id="aMinV"></span></div>
+        <div class="hint">Document-upload-order workaround; +6–8 min is the agreed scope</div>
+        <input type="range" id="aMin" min="4" max="12" step="1">
+      </div>
+
+      <div class="subhead">Issue B · AI Claims-Summary Accuracy</div>
+      <div class="ipt">
+        <div class="row"><label>Policy-exclusion omission rate</label><span class="val" id="bOmitV"></span></div>
+        <div class="hint">% of summaries that drop an exclusion. Re-enable requires <b>0%</b>.</div>
+        <input type="range" id="bOmit" min="0" max="12" step="1">
+      </div>
+      <div class="ipt">
+        <div class="row"><label>Defect reproducibility</label></div>
+        <div class="hint">Can QA reliably reproduce &amp; bound the failure?</div>
+        <div class="seg-mini" id="bRepro">
+          <button data-v="stable">Reproducible</button>
+          <button data-v="inter">Intermittent</button>
+          <button data-v="none">Not reproducible</button>
+        </div>
+      </div>
+
+      <div class="subhead">Issue C · Ticket Routing Instability</div>
+      <div class="ipt">
+        <div class="row"><label>Routing accuracy at peak</label><span class="val" id="cAccV"></span></div>
+        <div class="hint">Volume cap lifts only at ≥ 99% sustained</div>
+        <input type="range" id="cAcc" min="70" max="100" step="1">
+      </div>
+      <div class="ipt">
+        <div class="row"><label>Peak inbound vs. cap</label><span class="val" id="cPeakV"></span></div>
+        <div class="hint">Inbound ticket volume relative to the hard cap</div>
+        <input type="range" id="cPeak" min="60" max="170" step="5">
+      </div>
+      <div class="ipt">
+        <div class="row"><label>CS capacity utilisation</label><span class="val" id="cCsV"></span></div>
+        <div class="hint">&gt; 100% means the queue outruns staffed support</div>
+        <input type="range" id="cCs" min="50" max="140" step="5">
+      </div>
+
+      <div class="subhead">Platform — Cross-cutting</div>
+      <div class="ipt">
+        <div class="row"><label>Quote-engine API latency (p95)</label><span class="val" id="latV"></span></div>
+        <div class="hint">SLA target &lt; 800 ms</div>
+        <input type="range" id="lat" min="200" max="1800" step="50">
+      </div>
+      <div class="ipt">
+        <div class="row"><label>Platform uptime (rolling)</label><span class="val" id="upV"></span></div>
+        <div class="hint">SLA target 99.9%</div>
+        <input type="range" id="up" min="98.5" max="100" step="0.1">
+      </div>
+    </section>
+
+    <!-- ============ RISK ENGINE ============ -->
+    <section class="panel" id="risk">
+      <h3><span class="dot"></span>Dynamic Risk Assessment Engine</h3>
+      <div class="ph-note">Each issue scored 1–5 on three dimensions, then weighted into a composite. Bands follow the Go/No-Go framework below.</div>
+      <div id="issueCards"></div>
+    </section>
+
+    <!-- ============ STAKEHOLDER STATUS ============ -->
+    <section class="panel dark span2">
+      <h3 style="color:var(--white)"><span class="dot"></span>Stakeholder Communication Status</h3>
+      <div class="ph-note">Departmental readiness for the active scenario — what each function is told ahead of the T-24h sign-off.</div>
+      <div class="stk-grid" id="stkGrid"></div>
+    </section>
+
+    <!-- ============ FRAMEWORK ============ -->
+    <section class="panel span2">
+      <h3><span class="dot"></span>Go / No-Go Decision &amp; Risk-Scoring Framework</h3>
+      <div class="ph-note">The Target Baseline mirrors the launch deck exactly. Optimistic and Risk-Adjusted states extrapolate from the same model.</div>
+      <div class="legend">
+        <div class="lg safe">
+          <h4>Safe to launch</h4>
+          <ul>
+            <li>Workaround covers 100% of cases</li>
+            <li>No compliance / regulatory exposure</li>
+            <li>No customer-facing impact</li>
+            <li>Ops absorbs overhead at production scale</li>
+          </ul>
+        </div>
+        <div class="lg mit">
+          <h4>Requires mitigation</h4>
+          <ul>
+            <li>Workaround exists but adds manual load</li>
+            <li>Customer impact quantified &amp; contained</li>
+            <li>Fix committed within 2–4 weeks</li>
+            <li>Monitoring / escalation path confirmed</li>
+          </ul>
+        </div>
+        <div class="lg block">
+          <h4>Block feature</h4>
+          <ul>
+            <li>No workaround — customer-harm pathway open</li>
+            <li>Regulatory / compliance breach possible</li>
+            <li>Cannot scale under real production volume</li>
+            <li>SLA failure risk unacceptable at peak</li>
+          </ul>
+        </div>
+      </div>
+      <div class="formula">
+        <b>Composite risk</b> = (Customer&nbsp;Harm × <code>0.35</code>) + (Regulatory&nbsp;Exposure × <code>0.40</code>) + (Scale-at-Peak × <code>0.25</code>), each dimension scored 1–5.
+        Regulatory exposure carries the heaviest weight because protecting the UK licence is non-negotiable. &nbsp;Band: <code>&lt;2.0</code> Safe · <code>2.0–3.5</code> Mitigate · <code>≥3.5</code> Block — modified by workaround coverage (a high score with a manual override + monitoring becomes <b>Mitigate + Volume Cap</b>, while a high score with no workaround and an open harm pathway is a hard <b>Block</b>).
+      </div>
+    </section>
+
+  </div>
+
+  <p class="footnote">
+    Target Baseline reproduces the “UK Car Launch — Decision Framework &amp; Recommendation” deck (Conditional Go, 3 conditions).
+    Optimistic and Risk-Adjusted Strain are model extrapolations for leadership simulation only. Built as a release-planning prototype — judgement remains human-owned.
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   SCENARIO PRESETS  (Base = the uploaded deck's reality)
+   ============================================================ */
+const PRESETS = {
+  best:  {aVol:70,  aMin:5,  bOmit:0,  bRepro:'stable', cAcc:99, cPeak:80,  cCs:60,  lat:280,  up:99.99},
+  base:  {aVol:108, aMin:7,  bOmit:4,  bRepro:'none',   cAcc:88, cPeak:110, cCs:80,  lat:450,  up:99.9 },
+  worst: {aVol:240, aMin:8,  bOmit:9,  bRepro:'none',   cAcc:76, cPeak:155, cCs:120, lat:1400, up:99.2 }
+};
+const SCN_LABEL = {best:'Optimistic Projection', base:'Target Baseline', worst:'Risk-Adjusted Strain', custom:'Custom Simulation'};
+const SCN_DESC = {
+  best:'Demand healthy, AI summaries pass QA with zero exclusion omissions, routing self-stabilises above the 99% cap-lift threshold. Headroom across every function.',
+  base:'The reality of the launch deck: three live issues, AI summaries disabled, routing on manual override + volume cap, total-loss workaround trained. Conditional Go.',
+  worst:'Marketing over-delivers, claims volume scales faster than the book, routing degrades under load and CS runs over capacity — the T-24h failure path.',
+  custom:'Custom inputs — the engine is recomputing risk and the Go/No-Go call against your live assumptions.'
+};
+
+const state = {...PRESETS.base, scenario:'base'};
+
+/* ============================================================
+   SCORING MODEL  — calibrated so Base reproduces the deck
+   ============================================================ */
+function bucket(v, cuts){ for(let i=0;i<cuts.length;i++){ if(v<=cuts[i].lt) return cuts[i].s; } return cuts[cuts.length-1].s; }
+
+function scoreA(s){
+  const SP = s.aVol<=90?2 : s.aVol<=160?3 : s.aVol<=260?4 : 5;
+  const CH = s.aMin<=6?1 : s.aMin<=7?2 : 3;
+  const RE = CH;                              // delay-driven, proportional & low
+  return {CH,RE,SP, wk:'full'};
+}
+function scoreB(s){
+  const CH = s.bOmit===0?1 : s.bOmit<=2?4 : 5;
+  const RE = s.bOmit===0?1 : 5;              // any omission => Consumer Duty breach
+  let SP;
+  if(s.bOmit===0 && s.bRepro==='stable') SP=2;
+  else if(s.bRepro==='none' && s.bOmit>6) SP=5;
+  else if(s.bRepro==='none') SP=4;
+  else SP=3;
+  const wk = s.bOmit===0 ? 'resolved' : 'none';
+  return {CH,RE,SP, wk};
+}
+function scoreC(s){
+  const CH = s.cAcc>=99?1 : s.cAcc>=95?2 : s.cAcc>=85?4 : 5;
+  const RE = s.cAcc>=99?2 : s.cAcc>=85?3 : 4;
+  const SP = s.cAcc>=99?1 : s.cAcc>=90?4 : 5;
+  let wk;
+  if(s.cAcc>=99 && s.cPeak<=110 && s.cCs<=100) wk='lifted';
+  else if(s.cAcc<80 || s.cCs>115 || s.cPeak>150) wk='overrun';
+  else wk='partial';
+  return {CH,RE,SP, wk};
+}
+function composite(d){ return d.CH*0.35 + d.RE*0.40 + d.SP*0.25; }
+
+function band(d){
+  const sc = composite(d);
+  if(d.wk==='none'){ return (sc>=3.5 && (d.RE>=4||d.CH>=4)) ? 'block' : 'safe'; }
+  if(d.wk==='overrun') return 'block';
+  if(sc<2.0 && (d.wk==='full'||d.wk==='lifted'||d.wk==='resolved')) return 'safe';
+  if(d.SP>=5 && d.wk==='partial') return 'mitcap';
+  return 'mit';
+}
+
+const ISSUE_META = {
+  A:{id:'Issue A', name:'Claims Progression (Total Loss)'},
+  B:{id:'Issue B', name:'AI Claims-Summary Accuracy'},
+  C:{id:'Issue C', name:'Ticket Routing Instability'}
+};
+
+function actionText(key, b, d, s){
+  if(key==='A'){
+    if(b==='safe') return 'Overhead negligible at this volume — proceed, log under standard ops.';
+    if(b==='mit')  return 'Train all handlers on the upload-order workaround. Activate SLA timer. Eng fix sprint in week 1.';
+    return 'Workaround load is escalating — flag to Director, Claims &amp; CX (EU); add handler capacity and pull the fix forward.';
+  }
+  if(key==='B'){
+    if(b==='safe') return 'QA clears with zero omissions — re-enable AI summaries after Compliance sign-off.';
+    return 'No workaround for incorrect exclusion comms. <b>Ship AI summaries disabled</b>; re-enable only after a full QA cycle with zero failures.';
+  }
+  if(key==='C'){
+    if(b==='safe') return 'Routing sustained ≥ 99% — lift the volume cap, keep monitoring live.';
+    if(b==='block') return 'Routing cannot be contained at this load — <b>hold the launch</b>, hold volume at cap, invoke the rollback plan, escalate within 1 hour.';
+    return 'Manual override + daily Claims Bordereaux review. <b>Hold the volume cap</b> until routing passes 99%+ at peak.';
+  }
+}
+
+/* ---------- stakeholder logic ---------- */
+function stakeholders(scn, results){
+  const cBand = results.C.b, aBand = results.A.b, bBand = results.B.b;
+  const launchBlocked = (cBand==='block') || (aBand==='block');
+  if(launchBlocked){
+    return [
+      {d:'Product &amp; Engineering', st:'block', m:'Routing is failing containment and accuracy is below baseline. Conditions are not met — do not proceed at T-24h.'},
+      {d:'Claims &amp; CS Operations', st:'block', m:'Queue is outrunning staffed capacity with SLA breaches forming. Hold volume at cap; prepare maximum manual containment.'},
+      {d:'Compliance &amp; Legal', st:'block', m:'DISP timing and Consumer-Duty exposure are live. Recommend No-Go and document the residual-risk decision.'},
+      {d:'Executive / Leadership', st:'block', m:'Recommendation: HOLD at T-24h. Invoke the pre-agreed rollback plan and escalate the final call within 1 hour.'}
+    ];
+  }
+  const conditional = (bBand==='block') || results.A.b==='mit' || results.C.b==='mitcap' || results.C.b==='mit';
+  if(conditional){
+    return [
+      {d:'Product &amp; Engineering', st:'cond', m:'Conditional Go — three conditions unlock launch. AI summaries disabled, routing on live monitoring, workaround trained. Fix sprints committed post-launch.'},
+      {d:'Claims &amp; CS Operations', st:'cond', m:'We hear you — AI summaries are off, total-loss workaround is trained, and a live routing dashboard gives full visibility with manual override on Day 1.'},
+      {d:'Compliance &amp; Legal', st:'cond', m:'FCA-risk items addressed before go-live: AI summaries disabled, routing monitored with an escalation path, all mitigations documented for audit. Sign-off requested.'},
+      {d:'Executive / Leadership', st:'cond', m:'We are launching with managed risk: one feature temporarily disabled, routing monitored, handlers trained. UK Car is live on schedule.'}
+    ];
+  }
+  return [
+    {d:'Product &amp; Engineering', st:'ready', m:'All conditions clear. AI summaries re-enabled after QA sign-off; routing sustained above the cap-lift threshold.'},
+    {d:'Claims &amp; CS Operations', st:'ready', m:'Workaround overhead negligible, queue well within capacity, no manual override expected. Full operational readiness.'},
+    {d:'Compliance &amp; Legal', st:'ready', m:'No open regulatory exposure. Exclusion comms accurate, SLAs comfortably within DISP limits. Cleared to launch.'},
+    {d:'Executive / Leadership', st:'ready', m:'Full Go — all three issues resolved or absorbed. Launch at full capability, on schedule.'}
+  ];
+}
+
+/* ---------- overall verdict ---------- */
+function verdict(results){
+  const cBand=results.C.b, aBand=results.A.b, bBand=results.B.b;
+  const idx = (composite(results.A.d)*0.30 + composite(results.B.d)*0.35 + composite(results.C.d)*0.35);
+  const launchBlocked = (cBand==='block') || (aBand==='block');
+  if(launchBlocked){
+    return {cls:'nogo', k:'No-Go', title:'No-Go — Hold at the T-24h gate',
+      body:'At least one launch-critical issue cannot be contained at this load. Routing and/or claims handling fall outside the agreed workaround scope. Invoke maximum manual containment and the pre-agreed rollback plan; escalate the residual-risk decision for the final call within 1 hour.', idx};
+  }
+  const conditional = (bBand==='block') || aBand==='mit' || cBand==='mitcap' || cBand==='mit';
+  if(conditional){
+    return {cls:'conditional', k:'Conditional Go', title:'Conditional Go — launch on schedule with guardrails',
+      body:'No issue blocks the product launch. AI summaries ship disabled, the total-loss workaround is trained with SLA tracking, and routing runs on a live dashboard with manual override and a volume cap. Three non-negotiable conditions protect the UK licence and customer experience; full capability is restored once QA and Compliance clear it.', idx};
+  }
+  return {cls:'go', k:'Full Go', title:'Full Go — launch at full capability',
+    body:'All three issues are resolved or absorbed at production scale. AI summaries pass QA with zero exclusion omissions and can be re-enabled, routing sustains above the cap-lift threshold, and the total-loss workaround overhead is negligible. Launch on schedule with standard monitoring.', idx};
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function compute(){
+  const s = state;
+  return {
+    A:{d:scoreA(s)}, B:{d:scoreB(s)}, C:{d:scoreC(s)}
+  };
+}
+function dimRow(label, v){
+  const hot = v>=4;
+  return `<div class="dim"><span class="dl">${label}</span>
+    <div class="track"><div class="fill ${hot?'hot':''}" style="width:${(v/5)*100}%"></div></div>
+    <span class="dv">${v}</span></div>`;
+}
+const BADGE = {safe:['badge safe','Safe'], mit:['badge mit','Mitigate'], mitcap:['badge mit','Mitigate + Cap'], block:['badge block','Block']};
+
+function render(){
+  // inputs readouts
+  document.getElementById('aVolV').textContent = state.aVol + ' /mo';
+  document.getElementById('aMinV').textContent = '+'+state.aMin+' min';
+  document.getElementById('bOmitV').textContent = state.bOmit + '%';
+  document.getElementById('cAccV').textContent = state.cAcc + '%';
+  document.getElementById('cPeakV').textContent = state.cPeak + '%';
+  document.getElementById('cCsV').textContent = state.cCs + '%';
+  document.getElementById('latV').textContent = state.lat + ' ms';
+  document.getElementById('upV').textContent = state.up.toFixed(2) + '%';
+
+  // sync slider positions
+  ['aVol','aMin','bOmit','cAcc','cPeak','cCs','lat','up'].forEach(id=>{ document.getElementById(id).value = state[id]; });
+  document.querySelectorAll('#bRepro button').forEach(b=> b.classList.toggle('on', b.dataset.v===state.bRepro));
+
+  const r = compute();
+  ['A','B','C'].forEach(k=>{ r[k].b = band(r[k].d); });
+
+  // issue cards
+  let html='';
+  ['A','B','C'].forEach(k=>{
+    const d=r[k].d, b=r[k].b, comp=composite(d).toFixed(2);
+    const [bc,bl]=BADGE[b];
+    html += `<div class="issue">
+      <div class="issue-top">
+        <div><div class="issue-id">${ISSUE_META[k].id}</div><div class="issue-name">${ISSUE_META[k].name}</div></div>
+        <span class="${bc}">${bl}</span>
+      </div>
+      <div class="dims">
+        ${dimRow('Customer harm', d.CH)}
+        ${dimRow('Regulatory', d.RE)}
+        ${dimRow('Scale at peak', d.SP)}
+      </div>
+      <div class="issue-foot"><span>Composite risk</span><span class="comp">${comp} / 5.00</span></div>
+      <div class="issue-action">${actionText(k,b,d,state)}</div>
+    </div>`;
+  });
+  document.getElementById('issueCards').innerHTML = html;
+
+  // verdict
+  const v = verdict(r);
+  const vEl=document.getElementById('verdict');
+  vEl.className='verdict '+v.cls;
+  document.getElementById('vScn').textContent = SCN_LABEL[state.scenario];
+  document.getElementById('vTitle').textContent = v.title;
+  document.getElementById('vBody').innerHTML = v.body;
+  document.getElementById('vNum').textContent = v.idx.toFixed(2);
+
+  // stakeholders
+  const stk = stakeholders(state.scenario, r);
+  document.getElementById('stkGrid').innerHTML = stk.map(x=>`
+    <div class="stk"><div class="dept">${x.d}</div>
+      <span class="st ${x.st}">${x.st==='ready'?'Ready':x.st==='cond'?'Conditional':'Not Ready'}</span>
+      <div class="msg">${x.m}</div></div>`).join('');
+
+  // scenario chrome
+  document.getElementById('scenarioDesc').textContent = SCN_DESC[state.scenario];
+  document.querySelectorAll('#seg button').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.s===state.scenario);
+    btn.classList.toggle('neutral', btn.dataset.s==='base' && btn.dataset.s===state.scenario);
+  });
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function setScenario(name){
+  Object.assign(state, PRESETS[name]); state.scenario=name; render();
+}
+document.querySelectorAll('#seg button').forEach(b=> b.addEventListener('click', ()=>setScenario(b.dataset.s)));
+['aVol','aMin','bOmit','cAcc','cPeak','cCs','lat','up'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    state[id] = (id==='up') ? parseFloat(e.target.value) : parseInt(e.target.value,10);
+    state.scenario='custom'; render();
+  });
+});
+document.querySelectorAll('#bRepro button').forEach(b=> b.addEventListener('click', ()=>{
+  state.bRepro=b.dataset.v; state.scenario='custom'; render();
+}));
+
+setScenario('base');
+</script>
+</body>
+</html>

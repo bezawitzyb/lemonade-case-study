@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lemonade · UK Car — Hypercare Tracking Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900&family=Lato:ital,wght@0,400;0,700;0,900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff0083; --slate:#4a4a4a; --black:#000000; --white:#ffffff;
+    --slate-deep:#3a3a3a; --slate-line:#5a5a5a; --pink-tint:#fff0f7;
+    --grey-tint:#f4f4f4; --grey-line:#e3e3e3; --ink:#1a1a1a;
+    --white-70:rgba(255,255,255,.72); --white-45:rgba(255,255,255,.45); --black-08:rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Lato',sans-serif;background:var(--slate);color:var(--white);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:56px}
+  h1,h2,h3,h4{font-family:'Merriweather',serif}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 28px}
+
+  /* header */
+  .topbar{position:relative;background:var(--slate-deep);border-left:7px solid var(--pink);overflow:hidden}
+  .topbar .circle{position:absolute;right:-90px;top:-130px;width:340px;height:340px;border-radius:50%;background:var(--pink);opacity:.16}
+  .topbar-inner{padding:28px 28px 24px;max-width:1320px;margin:0 auto;position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px}
+  .mark{font-family:'Merriweather',serif;font-weight:900;color:var(--pink);font-size:18px;letter-spacing:.5px}
+  .topbar h1{font-size:30px;font-weight:900;margin:8px 0 3px;line-height:1.12}
+  .topbar .sub{color:var(--white-70);font-size:15px}
+  .live{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .live-clock{text-align:right}
+  .live-clock .lab{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--white-45);font-weight:700}
+  .live-clock .t{font-family:'Merriweather',serif;font-weight:900;font-size:22px}
+  .live-dot{display:inline-flex;align-items:center;gap:8px;background:var(--pink);padding:7px 14px;border-radius:40px;font-weight:700;font-size:12.5px;letter-spacing:.4px}
+  .live-dot .blink{width:9px;height:9px;border-radius:50%;background:var(--white);animation:blink 1.4s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* role bar */
+  .rolebar{background:var(--slate-deep);border-top:1px solid var(--slate-line)}
+  .rolebar-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 0}
+  .rolebar .lab{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--white-45);font-weight:700}
+  .seg{display:inline-flex;background:var(--slate);border:1px solid var(--slate-line);border-radius:46px;padding:5px;flex-wrap:wrap}
+  .seg button{font-family:'Lato',sans-serif;border:none;background:transparent;color:var(--white-70);font-size:13px;font-weight:700;padding:9px 17px;border-radius:40px;cursor:pointer;transition:.18s}
+  .seg button:hover{color:var(--white)}
+  .seg button.active{background:var(--pink);color:var(--white)}
+  .seg button.active.neutral{background:var(--white);color:var(--black)}
+  .roleline{font-size:13px;color:var(--white-70);margin-left:auto;max-width:520px;text-align:right;min-width:240px;flex:1}
+
+  /* condition strip */
+  .cond-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+  .cond{background:var(--slate-deep);border:1px solid var(--slate-line);border-radius:11px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .cond .cl{font-size:12.5px;color:var(--white-70)}
+  .cond .cl b{display:block;color:var(--white);font-size:14px;font-weight:700;margin-top:2px}
+  .tag{font-size:10.5px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;padding:6px 10px;border-radius:6px;white-space:nowrap}
+  .tag.off{background:var(--pink);color:var(--white)}
+  .tag.on{background:var(--white);color:var(--black)}
+  .tag.mon{background:transparent;color:var(--pink);border:2px solid var(--pink)}
+
+  /* main layout */
+  .main{display:grid;grid-template-columns:1fr 360px;gap:22px;margin-top:22px;align-items:start}
+
+  .section-title{font-size:13px;letter-spacing:1.6px;text-transform:uppercase;color:var(--white-45);font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:9px}
+  .section-title::after{content:"";flex:1;height:1px;background:var(--slate-line)}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .metric{background:var(--white);color:var(--ink);border-radius:12px;padding:16px 16px 15px;border:1px solid var(--black-08);position:relative;transition:opacity .25s, transform .25s}
+  .metric.muted{opacity:.32}
+  .metric .mlab{font-size:12px;color:var(--slate);font-weight:700}
+  .metric .mval{font-family:'Merriweather',serif;font-weight:900;font-size:30px;line-height:1.05;margin-top:7px}
+  .metric .munit{font-size:14px;color:var(--slate);font-weight:700;margin-left:3px}
+  .metric .mfoot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:11.5px;color:var(--slate);gap:8px}
+  .metric .mtarget{color:var(--slate)}
+  .stat{font-size:10px;font-weight:900;letter-spacing:.5px;text-transform:uppercase;padding:4px 8px;border-radius:5px;white-space:nowrap}
+  .stat.ok{background:var(--grey-tint);color:var(--slate)}
+  .stat.watch{background:transparent;color:var(--pink);border:1.5px solid var(--pink)}
+  .stat.breach{background:var(--pink);color:var(--white)}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px}
+  .spark i{flex:1;background:var(--grey-line);border-radius:1px;min-height:2px;display:block}
+  .spark i.hot{background:var(--pink)}
+  .owners{position:absolute;top:13px;right:14px;display:flex;gap:4px}
+  .owners span{font-size:9px;font-weight:900;color:var(--white);background:var(--slate);width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;letter-spacing:0}
+
+  /* alerts rail */
+  .rail{position:sticky;top:14px}
+  .rail h3{font-size:16px;font-weight:900;color:var(--white);display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .rail .sub{font-size:12px;color:var(--white-70);margin-bottom:14px}
+  .alert{background:var(--white);color:var(--ink);border-radius:11px;padding:13px 14px;margin-bottom:11px;border-left:5px solid var(--slate);animation:slideIn .4s ease}
+  .alert.breach{border-left-color:var(--pink)}
+  .alert.watch{border-left-color:var(--pink)}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .alert .ah{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .alert .asev{font-size:9.5px;font-weight:900;letter-spacing:.6px;text-transform:uppercase;padding:3px 7px;border-radius:5px}
+  .alert .asev.breach{background:var(--pink);color:var(--white)}
+  .alert .asev.watch{background:transparent;color:var(--pink);border:1.5px solid var(--pink)}
+  .alert .atime{font-size:11px;color:var(--slate)}
+  .alert .atitle{font-weight:700;font-size:13.5px;margin:7px 0 4px}
+  .alert .aroute{font-size:11.5px;color:var(--slate)}
+  .alert .aroute b{color:var(--pink)}
+  .alert .aaction{font-size:12px;color:var(--ink);margin-top:7px;background:var(--grey-tint);padding:8px 10px;border-radius:7px}
+  .rail .clear{text-align:center;color:var(--white-45);font-size:12.5px;padding:24px 0;background:var(--slate-deep);border:1px dashed var(--slate-line);border-radius:11px}
+
+  .thresh{background:var(--slate-deep);border:1px solid var(--slate-line);border-radius:11px;padding:16px;margin-top:18px}
+  .thresh h4{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--white-45);font-weight:700;margin-bottom:11px}
+  .thresh .tr{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:8px 0;border-top:1px solid var(--slate-line);color:var(--white-70)}
+  .thresh .tr:first-of-type{border-top:none}
+  .thresh .tr b{color:var(--white);font-weight:700}
+  .thresh .tr .rt{color:var(--pink);font-weight:700;white-space:nowrap}
+
+  .legend-owner{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--white-70);margin-top:14px}
+  .legend-owner span b{color:var(--white)}
+
+  .footnote{font-size:11.5px;color:var(--white-45);margin-top:26px;text-align:center;line-height:1.6}
+
+  @media(max-width:1000px){ .main{grid-template-columns:1fr} .rail{position:static} .cards{grid-template-columns:1fr 1fr} .cond-strip{grid-template-columns:1fr} .topbar-inner{align-items:flex-start} .roleline{text-align:left} }
+  @media(max-width:620px){ .cards{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="circle"></div>
+  <div class="topbar-inner">
+    <div>
+      <div class="mark">Lemonade</div>
+      <h1>UK Car — Hypercare Tracking Dashboard</h1>
+      <div class="sub">Live production pulse · Target Baseline strategy only · no simulation</div>
+    </div>
+    <div class="live">
+      <div class="live-clock">
+        <div class="lab">Hypercare window</div>
+        <div class="t" id="clock">Day 1 · 00:00</div>
+      </div>
+      <span class="live-dot"><span class="blink"></span> LIVE</span>
+    </div>
+  </div>
+</header>
+
+<div class="rolebar">
+  <div class="wrap rolebar-inner">
+    <span class="lab">Role view</span>
+    <div class="seg" id="roleSeg">
+      <button data-r="all" class="active neutral">All metrics</button>
+      <button data-r="eng">Engineering</button>
+      <button data-r="ops">Operations</button>
+      <button data-r="cs">Customer Success</button>
+      <button data-r="exec">Executive</button>
+    </div>
+    <div class="roleline" id="roleLine"></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- launch condition status -->
+  <div class="cond-strip">
+    <div class="cond"><div class="cl">Condition 01<b>AI claim summaries</b></div><span class="tag off">Disabled</span></div>
+    <div class="cond"><div class="cl">Condition 02<b>Routing override + volume cap</b></div><span class="tag mon">Active · monitored</span></div>
+    <div class="cond"><div class="cl">Condition 03<b>Handler workaround training</b></div><span class="tag on">Complete · SLA on</span></div>
+  </div>
+
+  <div class="main">
+    <div>
+      <!-- TOP OF FUNNEL -->
+      <div class="section-title">Top of Funnel</div>
+      <div class="cards" id="g-funnel"></div>
+
+      <!-- CHURN & FRICTION -->
+      <div class="section-title">Churn &amp; Friction</div>
+      <div class="cards" id="g-churn"></div>
+
+      <!-- CLAIMS & OPS -->
+      <div class="section-title">Claims &amp; Operations</div>
+      <div class="cards" id="g-claims"></div>
+
+      <div class="legend-owner">
+        <span><b>EN</b> Engineering</span><span><b>OP</b> Operations</span>
+        <span><b>CS</b> Customer Success</span><span><b>EX</b> Executive</span>
+        <span><b>CO</b> Compliance &amp; Legal</span>
+      </div>
+    </div>
+
+    <!-- ALERT RAIL -->
+    <aside class="rail">
+      <h3><span style="width:9px;height:9px;border-radius:50%;background:var(--pink);display:inline-block"></span>Automated Alert Feed</h3>
+      <div class="sub">Threshold breaches route to the owning team in real time. Filtered to the active role view.</div>
+      <div id="alertFeed"></div>
+
+      <div class="thresh">
+        <h4>Alert Routing Rules</h4>
+        <div class="tr"><span><b>Routing accuracy</b> &lt; 88% baseline</span><span class="rt">→ Ops Lead</span></div>
+        <div class="tr"><span><b>SLA breach</b> on high-priority claim</span><span class="rt">→ Claims/CS</span></div>
+        <div class="tr"><span><b>Total-loss handling</b> &gt; +8 min scope</span><span class="rt">→ Dir. Claims&amp;CX</span></div>
+        <div class="tr"><span><b>API p95</b> &gt; 800 ms</span><span class="rt">→ Engineering</span></div>
+        <div class="tr"><span><b>CS volume</b> &gt; 600/day capacity</span><span class="rt">→ Ops + CS</span></div>
+        <div class="tr"><span><b>Complaints</b> &gt; 15/day or DISP timer</span><span class="rt">→ Compliance</span></div>
+        <div class="tr"><span><b>AI QA</b> fails on re-enable</span><span class="rt">→ QA Lead + PM</span></div>
+      </div>
+    </aside>
+  </div>
+
+  <p class="footnote">
+    All values track the Target Baseline strategy from the launch deck — this dashboard reports live production only and does <b>not</b> simulate alternative scenarios.
+    Day-1 figures shown are an illustrative production stream for the prototype. Slack channel <b>#uk-car-launch</b> is the single source of truth; breaches mirror here and there simultaneously.
+  </p>
+</div>
+
+<script>
+/* ============================================================
+   BASE-CASE TARGETS  (the deck's reality)
+   each metric: base value, ± variance, threshold + direction,
+   unit, group, owner roles, optional formatter
+   ============================================================ */
+const M = {
+  lpv:    {lab:'Landing-page views', base:12000, var:600,  unit:'', grp:'funnel', own:['exec'], fmt:'k0', info:true, target:'~12,000 / day'},
+  quotes: {lab:'Quotes generated',   base:3000,  var:160,  unit:'', grp:'funnel', own:['exec'], fmt:'n0', info:true, target:'~3,000 / day'},
+  binds:  {lab:'Completed policies', base:360,   var:24,   unit:'', grp:'funnel', own:['exec'], fmt:'n0', info:true, target:'~360 / day'},
+  conv:   {lab:'Quote → bind rate',  base:12.0,  var:0.6,  unit:'%',grp:'funnel', own:['exec'], fmt:'p1', info:true, target:'12% target'},
+
+  cancel: {lab:'Cancelled policies', base:18,    var:5,    unit:'/day', grp:'churn', own:['cs'], hi:36, fmt:'n0', target:'alert > 36'},
+  csvol:  {lab:'CS contact volume',  base:480,   var:55,   unit:'/day', grp:'churn', own:['cs','ops'], hi:600, watch:540, fmt:'n0', target:'capacity 600/day'},
+  cmpl:   {lab:'Complaints logged',  base:8,     var:4,    unit:'/day', grp:'churn', own:['cs','co'], hi:15, watch:12, fmt:'n0', target:'DISP 3-day / 8-week'},
+
+  claims: {lab:'Claims submitted',   base:45,    var:8,    unit:'/day', grp:'claims', own:['ops'], fmt:'n0', info:true, target:'~45 / day'},
+  airatio:{lab:'AI vs manual claims',base:55,    var:6,    unit:'% AI', grp:'claims', own:['ops','eng'], fmt:'p0', info:true, target:'AI summaries off'},
+  tlwk:   {lab:'Total-loss workaround', base:7,  var:1.0,  unit:'min', grp:'claims', own:['ops'], hi:8, fmt:'f1', target:'scope +6–8 min'},
+  route:  {lab:'Routing accuracy (peak)', base:90, var:2.4, unit:'%', grp:'claims', own:['eng','ops'], lo:88, watch:90, fmt:'p1', target:'baseline 88% · cap lifts ≥99%'},
+  lat:    {lab:'API latency (p95)',  base:450,   var:120,  unit:'ms', grp:'claims', own:['eng'], hi:800, watch:700, fmt:'n0', target:'SLA < 800 ms'},
+  uptime: {lab:'Platform uptime',    base:99.95, var:0.06, unit:'%', grp:'claims', own:['eng'], lo:99.9, fmt:'p2', target:'SLA 99.9%'}
+};
+const ORDER = {funnel:['lpv','quotes','binds','conv'], churn:['cancel','csvol','cmpl'], claims:['claims','airatio','tlwk','route','lat','uptime']};
+const OWNER_TAG = {eng:'EN', ops:'OP', cs:'CS', exec:'EX', co:'CO'};
+const ROLE_LINE = {
+  all:'Every team’s metrics in one view — the shared launch picture mirrored in #uk-car-launch.',
+  eng:'Engineering owns platform health: routing accuracy, API latency, uptime and the AI re-enable QA gate.',
+  ops:'Operations owns the live queue: ticket routing, manual override, total-loss workaround scope and CS capacity.',
+  cs:'Customer Success owns the customer signal: contact volume, complaints, DISP timers and cancellations.',
+  exec:'Leadership owns the headline: funnel conversion, policies bound, and overall launch-health status.'
+};
+
+const state = {role:'all', hour:0};
+const history = {};                       // sparkline memory
+Object.keys(M).forEach(k=> history[k]=[]);
+const live = {};                          // current values
+Object.keys(M).forEach(k=> live[k]=M[k].base);
+const firedAlerts = {};                   // de-dupe key -> last hour fired
+let feed = [];
+
+/* ---------- formatting ---------- */
+function fmt(v,t){
+  if(t==='k0') return Math.round(v).toLocaleString();
+  if(t==='n0') return Math.round(v).toLocaleString();
+  if(t==='p0') return Math.round(v);
+  if(t==='p1') return v.toFixed(1);
+  if(t==='p2') return v.toFixed(2);
+  if(t==='f1') return '+'+v.toFixed(1);
+  return Math.round(v);
+}
+function statusOf(k){
+  const m=M[k], v=live[k];
+  if(m.info) return 'ok';
+  if(m.hi!==undefined){ if(v>=m.hi) return 'breach'; if(m.watch!==undefined && v>=m.watch) return 'watch'; }
+  if(m.lo!==undefined){ if(v<m.lo) return 'breach'; if(m.watch!==undefined && v<m.watch) return 'watch'; }
+  return 'ok';
+}
+
+/* ---------- alert engine ---------- */
+function pushAlert(k, sev){
+  const key=k+'-'+sev;
+  if(firedAlerts[key] && state.hour-firedAlerts[key] < 4) return;  // throttle
+  firedAlerts[key]=state.hour;
+  const m=M[k];
+  const ROUTES = {
+    route:{team:'Ops Lead', teams:['ops','eng'], action:'Activate manual override, hold volume at cap, alert Eng. Notify Director, Claims &amp; CX (EU) + Compliance same-hour.'},
+    lat:{team:'Engineering', teams:['eng'], action:'Investigate quote-engine latency; check autoscaling and downstream timeouts.'},
+    csvol:{team:'Operations + CS', teams:['ops','cs'], action:'Queue outrunning staffed capacity — surge support cover, apply inbound volume cap.'},
+    cmpl:{team:'Compliance &amp; Legal', teams:['cs','co'], action:'Review complaint log; acknowledge within DISP 3-day, final response within 8 weeks.'},
+    tlwk:{team:'Director, Claims &amp; CX (EU)', teams:['ops'], action:'Total-loss handling beyond +8 min scope — facilitate Eng–Ops bridge, pull fix forward.'},
+    cancel:{team:'Customer Success', teams:['cs'], action:'Cancellation spike — pull cancel reasons, check for a friction or comms defect.'},
+    uptime:{team:'Engineering', teams:['eng'], action:'Uptime below 99.9% SLA — open incident, confirm rollback readiness.'}
+  };
+  const r = ROUTES[k] || {team:'Release Planner', teams:['exec'], action:'Review and route.'};
+  feed.unshift({ id:Date.now()+Math.random(), sev, k, teams:r.teams,
+    title:`${m.lab} — ${sev==='breach'?'threshold breached':'approaching threshold'}`,
+    route:r.team, action:r.action, time:clockStr() });
+  if(feed.length>8) feed.pop();
+}
+function clockStr(){ const h=state.hour%24; const d=Math.floor(state.hour/24)+1; return `Day ${d} · ${String(h).padStart(2,'0')}:00`; }
+
+/* ---------- simulation tick ---------- */
+function tick(){
+  state.hour++;
+  Object.keys(M).forEach(k=>{
+    const m=M[k];
+    // gentle random walk toward base
+    let v = live[k] + (Math.random()-0.5)*m.var*0.9 + (m.base-live[k])*0.18;
+    // occasional realistic excursion on watched metrics
+    if(!m.info && Math.random()<0.10){ v += (Math.random()<0.5?-1:1)*m.var*1.4; }
+    live[k]=v;
+    const h=history[k]; h.push(v); if(h.length>14) h.shift();
+    const st=statusOf(k);
+    if(st==='breach') pushAlert(k,'breach');
+    else if(st==='watch') pushAlert(k,'watch');
+  });
+  render();
+}
+
+/* ---------- render ---------- */
+function spark(k){
+  const h=history[k]; if(h.length<2) return '<div class="spark"></div>';
+  const min=Math.min(...h), max=Math.max(...h), rng=(max-min)||1;
+  const st=statusOf(k);
+  return '<div class="spark">'+h.map(v=>{
+    const pct=Math.round(((v-min)/rng)*100); const hot=st!=='ok';
+    return `<i class="${hot?'hot':''}" style="height:${4+pct*0.20}px"></i>`;
+  }).join('')+'</div>';
+}
+function metricCard(k){
+  const m=M[k], v=live[k], st=statusOf(k);
+  const muted = state.role!=='all' && !m.own.includes(state.role);
+  const owners = m.own.map(o=>`<span title="${o}">${OWNER_TAG[o]}</span>`).join('');
+  const stLabel = st==='ok'?'On track':st==='watch'?'Watch':'Breach';
+  return `<div class="metric ${muted?'muted':''}" data-k="${k}">
+    <div class="owners">${owners}</div>
+    <div class="mlab">${m.lab}</div>
+    <div class="mval">${fmt(v,m.fmt)}<span class="munit">${m.unit}</span></div>
+    ${spark(k)}
+    <div class="mfoot"><span class="mtarget">${m.target}</span><span class="stat ${st}">${stLabel}</span></div>
+  </div>`;
+}
+function render(){
+  document.getElementById('clock').textContent=clockStr();
+  for(const g of ['funnel','churn','claims']){
+    document.getElementById('g-'+g).innerHTML = ORDER[g].map(metricCard).join('');
+  }
+  // alerts filtered by role
+  const shown = feed.filter(a=> state.role==='all' || a.teams.includes(state.role));
+  const fc=document.getElementById('alertFeed');
+  if(shown.length===0){ fc.innerHTML='<div class="clear">No active alerts for this view.<br>All tracked SLAs within threshold.</div>'; }
+  else { fc.innerHTML = shown.map(a=>`
+    <div class="alert ${a.sev}">
+      <div class="ah"><span class="asev ${a.sev}">${a.sev}</span><span class="atime">${a.time}</span></div>
+      <div class="atitle">${a.title}</div>
+      <div class="aroute">Routed to <b>${a.route}</b></div>
+      <div class="aaction">${a.action}</div>
+    </div>`).join(''); }
+  document.getElementById('roleLine').textContent=ROLE_LINE[state.role];
+  document.querySelectorAll('#roleSeg button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.r===state.role);
+    b.classList.toggle('neutral', b.dataset.r==='all' && state.role==='all');
+  });
+}
+
+document.querySelectorAll('#roleSeg button').forEach(b=> b.addEventListener('click',()=>{ state.role=b.dataset.r; render(); }));
+
+/* seed a couple of history points + one live alert so the engine is visibly working */
+for(let i=0;i<8;i++){ Object.keys(M).forEach(k=>{ history[k].push(M[k].base+(Math.random()-0.5)*M[k].var); }); }
+live.route = 87.2; pushAlert('route','breach');      // routing dipped below baseline
+live.csvol = 552;  pushAlert('csvol','watch');       // CS approaching capacity
+render();
+setInterval(tick, 2600);
+</script>
+</body>
+</html>
